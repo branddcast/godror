@@ -63,20 +63,20 @@ func Inicio(w http.ResponseWriter, r *http.Request) {
 	newConnParams.Password = godror.NewPassword(password)
 	newConnParams.ConnectString = dataBaseIp + ":" + dataBasePort + "/" + dataBaseName
 	//newConnParams.SetSessionParamOnInit("MACHINE", "'' || MY-LAPTOP-JEJE || ''")
-	//s := [][2]string{
+	/*s := [][2]string{
 		{"MACHINE", "MY-LAPTOP-eee"},
-	}
+	}*/
 	//newConnParams.AlterSession = s
 
 	log.Println(stringConection, "este")
 
 	// inicializamos el pool y la conexion a oracle
-	// db, err := sql.Open("godror", stringConection)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
+	db, err := sql.Open("godror", stringConection)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-	db := sql.OpenDB(godror.NewConnector(newConnParams))
+	//db := sql.OpenDB(godror.NewConnector(newConnParams))
 
 	// configuracion del pool de conexiones
 	// numero maximo de conexiones concurrentes abiertas
