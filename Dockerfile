@@ -34,6 +34,7 @@ WORKDIR /bin
 
 #copy form BUILDER API compile
 COPY --from=builder /go/src/godrortest/bin .
+COPY --from=builder /go/src/godrortest/set_machine.sh .
 
 EXPOSE 8080
 
