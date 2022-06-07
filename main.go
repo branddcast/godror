@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 
 	godror "github.com/godror/godror"
 	UUID "github.com/google/uuid"
@@ -14,6 +15,7 @@ import (
 
 var username, password, dataBaseIp, dataBaseName, dataBasePort = "", "", "", "", ""
 var dbIdentifier, dbClientInfo, dbModuloGo, dbOperation = "", "", "", ""
+var new_machine, actual_machine = "", ""
 var errors []interface{}
 
 func GetEnvDefault(key string) string {
@@ -39,13 +41,28 @@ func GetEnvHistory() {
 	dbOperation = GetEnvDefault("ENV_BAP_GO_DB_OPERATION")
 	dbModuloGo = GetEnvDefault("ENV_BAP_GO_DB_MODULO")
 
+	new_machine = GetEnvDefault("ENV_BAP_GO_MACHINE")
+	actual_machine = GetEnvDefault("HOSTNAME")
+
 	if len(errors) > 0 {
 		log.Fatalln(errors...)
 	}
 }
 
+func GetMachine(machine string) {
+	out, err := exec.Command("./set_machine.sh", "-c "+machine).Output()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	result := string(out)
+	log.Printf(":: %s", result)
+}
+
 func main() {
-	GetEnvHistory()           //Validar que las variables de entorno se carguen correctamente
+	GetEnvHistory() //Validar que las variables de entorno se carguen correctamente
+
+	log.Printf("Maquina actual: %s   -   Máquina nueva: %s", actual_machine, new_machine)
+	GetMachine(new_machine)   //Cambiar el nombre de la maquina
 	mux := http.NewServeMux() //estoy usando un multiplexor para mostar en host
 	mux.HandleFunc("/", Inicio)
 	log.Println("server corriendo...")
@@ -62,11 +79,6 @@ func Inicio(w http.ResponseWriter, r *http.Request) {
 	newConnParams.Username = username
 	newConnParams.Password = godror.NewPassword(password)
 	newConnParams.ConnectString = dataBaseIp + ":" + dataBasePort + "/" + dataBaseName
-	//newConnParams.SetSessionParamOnInit("MACHINE", "'' || MY-LAPTOP-JEJE || ''")
-	/*s := [][2]string{
-		{"MACHINE", "MY-LAPTOP-eee"},
-	}*/
-	//newConnParams.AlterSession = s
 
 	log.Println(stringConection, "este")
 
@@ -140,5 +152,7 @@ func Inicio(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//}
+
+	GetMachine(actual_machine)
 
 }
