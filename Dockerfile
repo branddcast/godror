@@ -32,6 +32,8 @@ ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_5
 # change workdir
 WORKDIR /bin
 
+USER root
+
 #copy form BUILDER API compile
 COPY --from=builder /go/src/godrortest/bin .
 COPY --from=builder /go/src/godrortest/set_machine.sh .
