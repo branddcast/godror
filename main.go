@@ -5,17 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"os/exec"
 
 	godror "github.com/godror/godror"
 	UUID "github.com/google/uuid"
 )
 
-var username, password, dataBaseIp, dataBaseName, dataBasePort = "", "", "", "", ""
-var dbIdentifier, dbClientInfo, dbModuloGo, dbOperation = "", "", "", ""
-var new_machine, actual_machine = "", ""
+var username, password, dataBaseIp, dataBaseName, dataBasePort = "brandonj", "Daniel22**", "https://apex.oracle.com/pls/apex/", "WKSP_BRANDONJ", ""
 var errors []interface{}
 
 func GetEnvDefault(key string) string {
@@ -27,58 +23,9 @@ func GetEnvDefault(key string) string {
 	return val
 }
 
-func GetEnvHistory() {
-
-	username = GetEnvDefault("ENV_BAP_GO_DB_USER")
-	password = GetEnvDefault("ENV_BAP_GO_DB_PASS")
-	dataBaseIp = GetEnvDefault("ENV_BAP_GO_DB_IP")
-	dataBasePort = GetEnvDefault("ENV_BAP_GO_DB_PORT")
-	dataBaseName = GetEnvDefault("ENV_BAP_GO_DB_NAME") //en el resultado vemos el nombre de esta conexion
-
-	// recupera variables para creacion del contexto para realizar el trace del api que levanta sesion con la bd, asi asignamos el nombre a la conexion
-	dbIdentifier = GetEnvDefault("ENV_BAP_GO_DB_IDENTIFIER") //Este es el nombre que vemos en la tabla para identificar
-	dbClientInfo = GetEnvDefault("ENV_BAP_GO_DB_CLIENTINFO")
-	dbOperation = GetEnvDefault("ENV_BAP_GO_DB_OPERATION")
-	dbModuloGo = GetEnvDefault("ENV_BAP_GO_DB_MODULO")
-
-	new_machine = GetEnvDefault("ENV_BAP_GO_MACHINE")
-	actual_machine = GetEnvDefault("HOSTNAME")
-
-	if len(errors) > 0 {
-		log.Fatalln(errors...)
-	}
-}
-
-func GetMachine(machine string) {
-	out, err := exec.Command("./set_machine.sh", "-c "+machine).Output()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	result := string(out)
-	log.Printf(":: %s", result)
-}
-
 func main() {
-	GetEnvHistory() //Validar que las variables de entorno se carguen correctamente
-
-	log.Printf("Maquina actual: %s   -   Máquina nueva: %s", actual_machine, new_machine)
-	GetMachine(new_machine)   //Cambiar el nombre de la maquina
-	mux := http.NewServeMux() //estoy usando un multiplexor para mostar en host
-	mux.HandleFunc("/", Inicio)
-	log.Println("server corriendo...")
-	http.ListenAndServe(":4000", mux)
-}
-
-func Inicio(w http.ResponseWriter, r *http.Request) {
-
 	//stringConection es nuestra variable con los datos del server para conectar
 	stringConection := username + "/" + password + "@" + dataBaseIp + ":" + dataBasePort + "/" + dataBaseName
-
-	//Connection Params
-	var newConnParams godror.ConnectionParams
-	newConnParams.Username = username
-	newConnParams.Password = godror.NewPassword(password)
-	newConnParams.ConnectString = dataBaseIp + ":" + dataBasePort + "/" + dataBaseName
 
 	log.Println(stringConection, "este")
 
@@ -88,45 +35,11 @@ func Inicio(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln(err)
 	}
 
-	//db := sql.OpenDB(godror.NewConnector(newConnParams))
-
-	// configuracion del pool de conexiones
-	// numero maximo de conexiones concurrentes abiertas
-	db.SetMaxOpenConns(5)
-	// numero maximo de conexiones retenidas y reusadas
-	db.SetMaxIdleConns(5)
-	// tiempo de vida de las conexiones creadas
-	//db.SetConnMaxLifetime(1 * time.Minute)
-
-	// se crea contexto para realizar el ping a la base de datos
-	ctxPing := godror.ContextWithTraceTag(context.Background(), godror.TraceTag{
-		ClientIdentifier: dbIdentifier,
-		ClientInfo:       dbClientInfo,
-		DbOp:             dbOperation,
-		Module:           dbModuloGo,
-		Action:           dbOperation,
-	})
-
-	// solicitud de PING hacia la base de datos
-	if err := db.PingContext(ctxPing); err != nil {
-		log.Println(err.Error())
-		log.Panic("La DB esta : abajo")
-	}
-	log.Println("La DB esta : arriba   <----> ", ctxPing) //contexto de conexion
-
 	ctxQuery := godror.ContextWithTraceTag(context.Background(), godror.TraceTag{
-		ClientIdentifier: dbIdentifier,
-		ClientInfo:       dbClientInfo,
-		DbOp:             dbOperation,
-		Module:           dbModuloGo,
-		Action:           "select",
+		Action: "select",
 	})
 
 	consultaDB := "SELECT * FROM canales_de_venta" //ejemplo
-	//consultaDB := "GRANT SELECT * from v$session" //ejemplo de muestra de tabla //no lo pongan me salio una lista demaciado larga y puede causar problemas
-	//consultaDB := "SELECT sess.username, sess.client_identifier, sess.module, sess.action, area.sql_text FROM v$session sess, v$sqlarea areaarea WHERE sess.sql_address = area.address"
-
-	//for i := 0; i < 5; i++ {
 
 	//log.Println("Consulta # ", i+1)
 	rows, err := db.QueryContext(ctxQuery, consultaDB)
@@ -143,16 +56,11 @@ func Inicio(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&id, &nombre)
 
 		idUUID, _ := UUID.FromBytes(id) //en consola
-		fmt.Println(idUUID, nombre)
+		log.Println(idUUID, nombre)
 
-		fmt.Fprintf(w, nombre) //en localhost
-		fmt.Fprint(w, "\n")
-		//fmt.Fprintf(w, nombre)
+		log.Println(nombre) //en localhost
+		log.Println("\n")
 
 	}
-
-	//}
-
-	GetMachine(actual_machine)
-
 }
+
