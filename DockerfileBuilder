@@ -12,7 +12,12 @@ ENV PATH="/usr/local/go/bin:$PATH" \
 
 WORKDIR /build
 
-RUN go mod init app; && \
-    go mod tidy; && \
-    go build -o ./bin/app; && \
-    cd bin ; pwd ; ls -ll
+RUN mkdir app
+
+WORKDIR /build/app
+
+COPY . .
+
+RUN go mod tidy
+
+RUN go build -o ./bin .

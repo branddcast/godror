@@ -1,3 +1,5 @@
+FROM localhost/go-builder as builder
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6
 
 RUN microdnf clean all \
@@ -8,16 +10,18 @@ RUN microdnf clean all \
   ; cd /tmp \
   ; unzip instantclient-basiclite-linux.x64-21.5.0.0.0dbru.zip -d /opt/oracle
 
-COPY /instantclient_21_5 /opt/oracle/instantclient_21_5
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_21_5
 
 WORKDIR /opt/app
+
+COPY --from=builder /build/app/bin /opt/app
+
 RUN chown 1001 /opt/app; \
     chmod "g+rwX" /opt/app; \
     chown 1001:root /opt/app;
 	
-USER 1001
+USER root
 
 EXPOSE 8080
 
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/opt/app/", "app" ]
