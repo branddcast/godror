@@ -11,7 +11,7 @@ import (
 	UUID "github.com/google/uuid"
 )
 
-var username, password, dataBaseIp, dataBaseName, dataBasePort = "brandonj", "Daniel22**", "https://apex.oracle.com/pls/apex/", "WKSP_BRANDONJ", ""
+var username, password, dataBaseIp, dataBaseName, dataBasePort = "branjc", "12345", "127.0.0.1:2345", "WKSP", ""
 var errors []interface{}
 
 func GetEnvDefault(key string) string {
